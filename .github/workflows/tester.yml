@@ -6,9 +6,6 @@ jobs:
   tester:
     runs-on: ubuntu-latest
 
-  test-build-up:
-    runs-on: ubuntu-latest
-
     steps:
       - name: Upload the project
         uses: actions/checkout@v4
