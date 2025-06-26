@@ -1,0 +1,16 @@
+name: Track Uploads
+
+on: push
+
+jobs:
+  pre-build-clean-up:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Upload the project
+        uses: actions/checkout@v4
+
+      - name: Delete checklist txt / target if avaliable
+        run: |
+          rm -f checklist.txt
+          rm -rf target
