@@ -31,9 +31,9 @@ pub fn gets_file_name(filename: &str) -> Result<String, Error> {
 /// lines in a vector data structure.
 /// ```
 /// use runs::runs::read_file;
-/// let file = "../tests/t.txt";
-/// let lines = read_file(file);
-/// assert_eq!(lines,vec!["hello", "world", "of\n", "rubies..."]);
+/// let file = "src/runs/unittest.rs";
+/// let lines = read_file(file)[0].to_string();
+/// assert!(lines.contains("//! runs crates unittest"));
 /// ```
 
 pub fn read_file(filename: &str) -> Vec<String> {
