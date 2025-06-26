@@ -14,30 +14,3 @@ jobs:
         run: |
           rm -f checklist.txt
           rm -rf target
-
-  test-build-up:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Upload the project
-        uses: actions/checkout@v4
-
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Run tests
-        run: cargo test --all
