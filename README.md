@@ -27,7 +27,7 @@ cargo install runs
 
 ### Or from source
 
-git clone https://github.com/your-username/runs.git
+git clone https://github.com/2teez/runs.git
 
 cd runs
 
@@ -49,3 +49,18 @@ This will:
   5.  Delete the project
 
   6.  Print results to your terminal
+
+  ---
+
+  📝 Example
+  Given math.rs:
+
+  /// Add two numbers.
+  ///
+  /// ```
+  /// use math_proj::add;
+  /// assert_eq!(add(2, 3), 5);
+  /// ```
+  pub fn add<T: std::ops::Add<Output = T>>(a: T, b: T) -> T {
+      a + b
+  }
