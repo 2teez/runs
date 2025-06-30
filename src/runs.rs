@@ -80,8 +80,7 @@ pub fn create_temp_project(data: &[String]) {
     create_run_delete(Action::DELETE, &file);
 }
 
-pub(crate) fn copy_file(from: &str, to: &str) /*-> io::Result<()>*/
-{
+pub(crate) fn copy_file(from: &str, to: &str) {
     // read mode activated here
     let file = File::open(from).expect("can't open file.");
     let buf_from = BufReader::new(file);
