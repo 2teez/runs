@@ -10,7 +10,8 @@
 
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, Error, Read, Write};
+use std::io::BufReader;
+use std::io::{self, BufRead, Error, Read, Write};
 use std::ops::Index;
 use std::path::Path;
 use std::process::Command;
@@ -18,25 +19,9 @@ use std::process::Command;
 /// enum type for either to create or delete used a a number type
 pub(crate) enum Project {
     CREATE,
+    RUN,
     DELETE,
 }
-
-/// trait Pairs
-trait Pairs<T: Clone>: Index<usize, Output = T> {
-    fn first(&self) -> T {
-        self[0].clone()
-    }
-
-    fn second(&self) -> T {
-        self[1].clone()
-    }
-
-    fn pairs(&self) -> (T, T) {
-        (self.first(), self.second())
-    }
-}
-/// trait Pairs impl for [T]
-impl<T: Clone> Pairs<T> for [T] {}
 
 /// This function get a valid filename, returns a String or io::Error.
 /// ```
@@ -82,34 +67,113 @@ pub fn read_file(filename: &str) -> Vec<String> {
 /// using cargo test --doc
 
 pub fn create_temp_project(data: &[String]) {
-    let comb_file = data;
-    let (file, action) = if comb_file.len() != 2 {
-        ("tempo".to_owned(), "create".to_owned())
-    } else {
-        comb_file.pairs()
-    };
-    if action == "create".to_owned() {
-        create_n_delete(Project::CREATE, &file);
-    } else {
-        create_n_delete(Project::DELETE, &file);
+    let file = &data[1..]; // skip the executable file
+
+    if file.len() != 1 {
+        eprintln!("Usage: runs [filename-to-create-from]");
+        std::process::exit(1);
     }
+
+    // get the filename
+    let file = file.first().unwrap();
+
+    create_run_delete(Project::CREATE, &file);
+    create_run_delete(Project::DELETE, &file);
+    // create_n_delete(Project::DELETE, &file);
+}
+
+pub(crate) fn copy_file(from: &str, to: &str) /*-> io::Result<()>*/
+{
+    // read mode activated here
+    let file = File::open(from).expect("can't open file.");
+    let buf_from = BufReader::new(file);
+
+    // write mode activated here
+    let mut file_to = File::create(to).expect("can't open file");
+    for line in buf_from.lines() {
+        write!(file_to, "{}", line.unwrap());
+    }
+}
+
+pub(crate) fn check_file(filename: &str) -> io::Result<bool> {
+    let file = File::open(filename)?;
+    let buf = BufReader::new(file);
+    for line in buf.lines() {
+        if line.unwrap().contains("/// ```") {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// This function strip filename extention off
+///
+/// ```
+/// use runs::runs::remove_file_extention;
+/// let file = "document.rs";
+/// assert_eq!("document", remove_file_extention(file));
+/// ```
+///
+pub fn remove_file_extention(filename: &str) -> String {
+    let mut nfile = String::new();
+    if let Some(filename) = String::from(filename).strip_suffix(".rs") {
+        nfile = format!("{}", filename);
+    }
+    nfile
 }
 
 /// This function takes enum Project with a string to either
 /// create or delete a temporary project file.
 /// It's running a shell within rust.
-pub(crate) fn create_n_delete(action: Project, filename: &str) {
+pub(crate) fn create_run_delete(action: Project, filename: &str) {
     match action {
-        Project::CREATE => Command::new("sh")
-            .arg("-c")
-            .arg(format!("cargo new --lib {}_proj", filename))
-            .output()
-            .expect("Can't create the new project."),
-        Project::DELETE => Command::new("sh")
-            .arg("-c")
-            .arg(format!("rm -rf {}", filename))
-            .output()
-            .expect("Can't delete the project."),
+        Project::CREATE => {
+            let status = match check_file(filename) {
+                Ok(status) => status,
+                Err(err) => {
+                    eprintln!("{} {:?}", filename, err.kind());
+                    false
+                }
+            };
+
+            if !status {
+                eprintln!("{} - MUST contains doctest", filename);
+                std::process::exit(1);
+            }
+
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!(
+                    "cargo new --lib {}_proj",
+                    &remove_file_extention(filename)
+                ))
+                .output()
+                .expect("Can't create the new project.");
+            // copy content
+            copy_file(
+                filename,
+                &format!("{}_proj/src/lib.rs", &remove_file_extention(filename)),
+            );
+        }
+        Project::RUN => {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!(
+                    "cd {}_proj/src/lib.rs",
+                    remove_file_extention(filename)
+                ))
+                .arg(format!("cargo test --all"))
+                .output()
+                .expect("Can't create the new project.");
+        }
+        Project::DELETE => {
+            //println!("In DELETE: {} <> {}", nfile, filename);
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("rm -rf {}", remove_file_extention(filename)))
+                .output()
+                .expect("Can't delete the project.");
+        }
     };
 }
 
