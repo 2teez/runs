@@ -1,6 +1,21 @@
 [package]
 name = "runs"
-version = "0.1.0"
+version = "0.1.1"
+authors = ["timothy adigun <2teezrust@gmail.com>"]
+description = "runs makes it possible to execute Rust documentation tests (doctests) on a standalone '.rs' file"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/2teez/runs"
+documentation = "https://github.com/2teez/runs"
+keywords = ["doctest", "automation", "cargo", "standalone", "cli"]
+categories = [
+    "development-tools::testing",
+    "command-line-utilities",
+    "development-tools",
+    "filesystem",
+    "rust-patterns",
+]
+
 edition = "2021"
 
 [dependencies]
