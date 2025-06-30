@@ -120,6 +120,34 @@ pub fn remove_file_extention(filename: &str) -> String {
     nfile
 }
 
+/// This function gets input from user and expect a response
+///
+/// ```
+/// use runs::runs::user_input;
+/// let answer = user_input("Answer: y/n: "); // response: y
+/// assert_eq!(answer, Some("".to_string()));
+/// ```
+
+pub fn user_input(msg: &str) -> Option<String> {
+    loop {
+        print!("{}", msg);
+        io::stdout().flush().unwrap();
+
+        let mut line = String::new();
+        if io::stdin().read_line(&mut line).is_err() {
+            eprintln!("Failed to read input.");
+            continue;
+        }
+
+        let input = line.trim().to_lowercase();
+        if input == "y" || input == "n" {
+            return Some(input);
+        }
+
+        eprintln!("Input must be 'y' or 'n'.");
+    }
+}
+
 /// This function takes enum Project with a string to either
 /// create or delete a temporary project file.
 /// It's running a shell within rust.
@@ -166,11 +194,15 @@ pub(crate) fn create_run_delete(action: Action, filename: &str) {
             eprintln!("stderr:\n{}", String::from_utf8_lossy(&output.stderr));
         }
         Action::DELETE => {
-            let _ = Command::new("sh")
-                .arg("-c")
-                .arg(format!("rm -rf {}_proj", remove_file_extention(filename)))
-                .output()
-                .expect("Can't delete the project.");
+            if let Some(user_reponses) = user_input("Want to keep the temporary folder? [y/n]: ") {
+                if user_reponses == "n".to_string() {
+                    let _ = Command::new("sh")
+                        .arg("-c")
+                        .arg(format!("rm -rf {}_proj", remove_file_extention(filename)))
+                        .output()
+                        .expect("Can't delete the project.");
+                }
+            }
         }
     };
 }
