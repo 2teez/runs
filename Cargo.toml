@@ -15,6 +15,7 @@ categories = [
     "filesystem",
     "rust-patterns",
 ]
+exclude = ["/target", "Cargo.toml.orig"]
 
 edition = "2021"
 
