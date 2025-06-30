@@ -11,6 +11,12 @@
 use std::fs::{self, File};
 use std::io::{self, Error, Read, Write};
 use std::path::Path;
+use std::process::Command;
+
+pub(self) enum Project {
+    CREATE,
+    DELETE,
+}
 
 /// This function get a valid filename, returns a String or io::Error.
 /// ```
@@ -50,6 +56,26 @@ pub fn read_file(filename: &str) -> Vec<String> {
         n = file.read(&mut chunks).unwrap_or(0);
     }
     data
+}
+
+/// creates the folder for the temporary project to be tested
+/// using cargo test --doc
+
+pub fn create_temp_project() {}
+
+pub(self) fn create_n_delete(action: Project, filename: &str) {
+    match action {
+        Project::CREATE => Command::new("sh")
+            .arg("-c")
+            .arg(format!("cargo new --lib {}_proj", filename))
+            .output()
+            .expect("Can't create the new project."),
+        Project::DELETE => Command::new("sh")
+            .arg("-c")
+            .arg(format!("rm -rf {}", filename))
+            .output()
+            .expect("Can't delete the project."),
+    };
 }
 
 #[cfg(test)]
