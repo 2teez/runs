@@ -8,15 +8,35 @@
 //! Then delete all the temporary projects, leaving on the standalone
 //! doctest file.
 
+use std::env;
 use std::fs::{self, File};
 use std::io::{self, Error, Read, Write};
+use std::ops::Index;
 use std::path::Path;
 use std::process::Command;
 
-pub(self) enum Project {
+/// enum type for either to create or delete used a a number type
+pub(crate) enum Project {
     CREATE,
     DELETE,
 }
+
+/// trait Pairs
+trait Pairs<T: Clone>: Index<usize, Output = T> {
+    fn first(&self) -> T {
+        self[0].clone()
+    }
+
+    fn second(&self) -> T {
+        self[1].clone()
+    }
+
+    fn pairs(&self) -> (T, T) {
+        (self.first(), self.second())
+    }
+}
+/// trait Pairs impl for [T]
+impl<T: Clone> Pairs<T> for [T] {}
 
 /// This function get a valid filename, returns a String or io::Error.
 /// ```
@@ -61,9 +81,24 @@ pub fn read_file(filename: &str) -> Vec<String> {
 /// creates the folder for the temporary project to be tested
 /// using cargo test --doc
 
-pub fn create_temp_project() {}
+pub fn create_temp_project(data: &[String]) {
+    let comb_file = data;
+    let (file, action) = if comb_file.len() != 2 {
+        ("tempo".to_owned(), "create".to_owned())
+    } else {
+        comb_file.pairs()
+    };
+    if action == "create".to_owned() {
+        create_n_delete(Project::CREATE, &file);
+    } else {
+        create_n_delete(Project::DELETE, &file);
+    }
+}
 
-pub(self) fn create_n_delete(action: Project, filename: &str) {
+/// This function takes enum Project with a string to either
+/// create or delete a temporary project file.
+/// It's running a shell within rust.
+pub(crate) fn create_n_delete(action: Project, filename: &str) {
     match action {
         Project::CREATE => Command::new("sh")
             .arg("-c")
