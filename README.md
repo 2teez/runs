@@ -53,8 +53,10 @@ This will:
   ---
 
   📝 Example
-  Given math.rs:
 
+  ### Given math.rs:
+
+```
   /// Add two numbers.
   ///
   /// ```
@@ -64,7 +66,7 @@ This will:
   pub fn add<T: std::ops::Add<Output = T>>(a: T, b: T) -> T {
       a + b
   }
-
+```
   #### You can run the doctest:
 
 > ```runs math.rs```
