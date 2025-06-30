@@ -8,16 +8,14 @@
 //! Then delete all the temporary projects, leaving on the standalone
 //! doctest file.
 
-use std::env;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::BufReader;
 use std::io::{self, BufRead, Error, Read, Write};
-use std::ops::Index;
 use std::path::Path;
 use std::process::Command;
 
 /// enum type for either to create or delete used a a number type
-pub(crate) enum Project {
+pub(crate) enum Action {
     CREATE,
     RUN,
     DELETE,
@@ -77,9 +75,9 @@ pub fn create_temp_project(data: &[String]) {
     // get the filename
     let file = file.first().unwrap();
 
-    create_run_delete(Project::CREATE, &file);
-    create_run_delete(Project::DELETE, &file);
-    // create_n_delete(Project::DELETE, &file);
+    create_run_delete(Action::CREATE, &file);
+    create_run_delete(Action::RUN, &file);
+    create_run_delete(Action::DELETE, &file);
 }
 
 pub(crate) fn copy_file(from: &str, to: &str) /*-> io::Result<()>*/
@@ -91,7 +89,7 @@ pub(crate) fn copy_file(from: &str, to: &str) /*-> io::Result<()>*/
     // write mode activated here
     let mut file_to = File::create(to).expect("can't open file");
     for line in buf_from.lines() {
-        write!(file_to, "{}", line.unwrap());
+        writeln!(file_to, "{}", line.unwrap());
     }
 }
 
@@ -125,9 +123,9 @@ pub fn remove_file_extention(filename: &str) -> String {
 /// This function takes enum Project with a string to either
 /// create or delete a temporary project file.
 /// It's running a shell within rust.
-pub(crate) fn create_run_delete(action: Project, filename: &str) {
+pub(crate) fn create_run_delete(action: Action, filename: &str) {
     match action {
-        Project::CREATE => {
+        Action::CREATE => {
             let status = match check_file(filename) {
                 Ok(status) => status,
                 Err(err) => {
@@ -141,7 +139,7 @@ pub(crate) fn create_run_delete(action: Project, filename: &str) {
                 std::process::exit(1);
             }
 
-            Command::new("sh")
+            let _ = Command::new("sh")
                 .arg("-c")
                 .arg(format!(
                     "cargo new --lib {}_proj",
@@ -155,22 +153,22 @@ pub(crate) fn create_run_delete(action: Project, filename: &str) {
                 &format!("{}_proj/src/lib.rs", &remove_file_extention(filename)),
             );
         }
-        Project::RUN => {
-            Command::new("sh")
+        Action::RUN => {
+            let output = Command::new("sh")
                 .arg("-c")
                 .arg(format!(
-                    "cd {}_proj/src/lib.rs",
+                    "cd {}_proj/ && cargo test --all",
                     remove_file_extention(filename)
                 ))
-                .arg(format!("cargo test --all"))
                 .output()
                 .expect("Can't create the new project.");
+            println!("stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+            eprintln!("stderr:\n{}", String::from_utf8_lossy(&output.stderr));
         }
-        Project::DELETE => {
-            //println!("In DELETE: {} <> {}", nfile, filename);
-            Command::new("sh")
+        Action::DELETE => {
+            let _ = Command::new("sh")
                 .arg("-c")
-                .arg(format!("rm -rf {}", remove_file_extention(filename)))
+                .arg(format!("rm -rf {}_proj", remove_file_extention(filename)))
                 .output()
                 .expect("Can't delete the project.");
         }
