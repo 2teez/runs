@@ -88,7 +88,12 @@ pub(crate) fn copy_file(from: &str, to: &str) {
     // write mode activated here
     let mut file_to = File::create(to).expect("can't open file");
     for line in buf_from.lines() {
-        writeln!(file_to, "{}", line.unwrap());
+        let line = line.unwrap().clone();
+        if line.starts_with("fn") {
+            writeln!(file_to, "pub {}", line);
+        } else {
+            writeln!(file_to, "{}", line);
+        }
     }
 }
 
