@@ -70,3 +70,6 @@ This will:
   #### You can run the doctest:
 
 > ```runs math.rs```
+
+### Versioning:
+  The version was increased from 0.1.1 to 0.1.2, because the fn keyword is made public in the src/lib.rs by `runs`. So, user doesn't have to do that on their own.
