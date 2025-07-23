@@ -80,6 +80,33 @@ pub fn create_temp_project(data: &[String]) {
     create_run_delete(Action::DELETE, &file);
 }
 
+// add specified crates indicated by the user in the
+// lib.rs or initial doctest file
+pub(crate) fn remake_cargo_file(file: &str) -> Vec<String> {
+    // read mode activated here
+
+    let file = File::open(file).expect("can't open file.");
+    let buf_from = BufReader::new(file);
+    let mut addins = Vec::<String>::new();
+    for line in buf_from.lines() {
+        let line = line.unwrap().clone();
+        if (line.starts_with("/// use") || line.starts_with("///use")) && !line.contains("std::") {
+            if let Some(stripped) = line
+                .strip_prefix("/// use")
+                .or_else(|| line.strip_prefix("///use"))
+            {
+                let trimmed = stripped.trim();
+                if let Some(crate_name) = trimmed.split("::").next() {
+                    if !crate_name.starts_with("std") {
+                        addins.push(crate_name.to_owned());
+                    }
+                }
+            }
+        }
+    }
+    addins
+}
+
 pub(crate) fn copy_file(from: &str, to: &str) {
     // read mode activated here
     let file = File::open(from).expect("can't open file.");
@@ -184,6 +211,20 @@ pub(crate) fn create_run_delete(action: Action, filename: &str) {
                 filename,
                 &format!("{}_proj/src/lib.rs", &remove_file_extention(filename)),
             );
+
+            // remake cargo file
+            for file_to_add in remake_cargo_file(filename) {
+                let _ = Command::new("sh")
+                    .arg("-c")
+                    .arg(format!(
+                        "
+                        cd {}_proj && cargo add {}",
+                        remove_file_extention(filename),
+                        file_to_add
+                    ))
+                    .output()
+                    .expect("Can't add specified crate to project.");
+            }
         }
         Action::RUN => {
             let output = Command::new("sh")
