@@ -73,3 +73,7 @@ This will:
 
 ### Versioning:
   The version was increased from 0.1.1 to 0.1.2, because the fn keyword is made public in the src/lib.rs by `runs`. So, user doesn't have to do that on their own.
+
+  Version 0.2.0, allow the crate `runs` to run `cargo add`, adding to the user's project Cargo toml file, the specified crates used on the doctest. The user does NOT have to manually do anymore, like they will do in the previous version.
+
+  Version 0.2.1, updated the README file.
